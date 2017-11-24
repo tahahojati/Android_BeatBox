@@ -9,6 +9,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.SeekBar;
 
 import com.bignerdranch.android.beatbox.databinding.FragmentBeatBoxBinding;
 import com.bignerdranch.android.beatbox.databinding.ListItemSoundBinding;
@@ -17,13 +18,16 @@ import java.util.List;
 
 public class BeatBoxFragment extends Fragment {
 
-    BeatBox mBeatBox;
+    private BeatBox mBeatBox;
+    private float mPlayBackSpeed;
+    private FragmentBeatBoxBinding mBinding;
 
     public static BeatBoxFragment newInstance() {
 
         Bundle args = new Bundle();
 
         BeatBoxFragment fragment = new BeatBoxFragment();
+        fragment.mPlayBackSpeed = 1.0f;
         fragment.setArguments(args);
         return fragment;
     }
@@ -32,13 +36,38 @@ public class BeatBoxFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         FragmentBeatBoxBinding binding = DataBindingUtil.inflate(inflater, R.layout.fragment_beat_box, container, false);
+        mBinding = binding;
         binding.recyclerView.setLayoutManager(new GridLayoutManager(getActivity(), 3));
         binding.recyclerView.setAdapter(new SoundAdapter(mBeatBox.getSounds()));
+        binding.playbackRate.setMax(190);
+        binding.playbackRate.setProgress(90);
+        mBinding.playbackRateTitle.setText(getString(R.string.playback_speed_bar_title, 100));
+        binding.playbackRate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int i, boolean b) {
+                mBinding.playbackRateTitle.setText(
+                        getString(R.string.playback_speed_bar_title, seekBar.getProgress() + 10));
+            }
 
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                setPlayBackSpeed(seekBar.getProgress());
+            }
+        });
 
         return binding.getRoot();
     }
 
+    private void setPlayBackSpeed(int speed) {
+        int i = (speed + 10);
+        float f = i / 100f;
+        mBeatBox.setPlaybackSpeed(f);
+        mBinding.playbackRateTitle.setText(getString(R.string.playback_speed_bar_title, i));
+    }
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
